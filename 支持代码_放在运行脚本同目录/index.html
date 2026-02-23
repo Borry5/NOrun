@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网页控制台</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px 20px;
+            color: #333;
+        }
+
+        /* 外部大容器，启用弹性布局配合响应式 */
+        .main-wrapper {
+            display: flex;
+            flex-direction: row;
+            gap: 30px;
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        /* 左右两侧面板的通用样式 */
+        .panel {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            /* 平分空间 */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ------------------ 左侧表单特有样式 ------------------ */
+        .form-panel {
+            text-align: center;
+            justify-content: center;
+        }
+
+        .form-panel h2 {
+            margin-bottom: 25px;
+            color: #333;
+            font-size: 24px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.1s ease;
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            background: #45a049;
+        }
+
+        .btn-submit:active {
+            transform: scale(0.98);
+        }
+
+        .btn-submit:disabled {
+            background: #9E9E9E;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #result-box {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+            font-size: 14px;
+            line-height: 1.5;
+            animation: fadeIn 0.4s ease;
+            text-align: left;
+        }
+
+        .result-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+
+        .result-error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loader {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ------------------ 右侧教程特有样式 ------------------ */
+        .tutorial-panel {
+            text-align: left;
+            overflow-y: auto;
+        }
+
+        .tutorial-panel h2 {
+            margin-bottom: 20px;
+            color: #1976D2;
+            font-size: 22px;
+            border-bottom: 2px solid #e3f2fd;
+            padding-bottom: 10px;
+        }
+
+        .tutorial-step {
+            margin-bottom: 20px;
+        }
+
+        .tutorial-step h3 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .tutorial-step h3 span {
+            background: #1976D2;
+            color: white;
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+
+        .tutorial-step p {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #666;
+            padding-left: 34px;
+        }
+
+        .highlight {
+            color: #d32f2f;
+            font-weight: bold;
+        }
+
+        .action-links {
+            padding-left: 34px;
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .btn-link {
+            display: inline-block;
+            padding: 8px 12px;
+            background: #f1f8e9;
+            color: #388e3c;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 13px;
+            border: 1px solid #c5e1a5;
+            transition: all 0.2s;
+        }
+
+        .btn-link:hover {
+            background: #388e3c;
+            color: white;
+        }
+
+        .btn-link.primary {
+            background: #e3f2fd;
+            color: #1976D2;
+            border-color: #bbdefb;
+        }
+
+        .btn-link.primary:hover {
+            background: #1976D2;
+            color: white;
+        }
+
+        /* ------------------ 一键脚本按钮特有样式 ------------------ */
+        .btn-script-disabled {
+            width: 100%;
+            padding: 12px;
+            background: #e0e0e0;
+            color: #9e9e9e;
+            border: 1px dashed #bdbdbd;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-script-disabled:active {
+            transform: scale(0.98);
+            background: #d5d5d5;
+        }
+
+        .btn-script-active {
+            width: 100%;
+            padding: 12px;
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-script-active:hover {
+            background: #c8e6c9;
+            transform: translateY(-1px);
+        }
+
+        .script-menu {
+            display: none;
+            position: absolute;
+            bottom: 110%;
+            left: 0;
+            width: 100%;
+            background-color: white;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            border-radius: 8px;
+            z-index: 100;
+            overflow: hidden;
+            border: 1px solid #eee;
+        }
+
+        .script-menu a {
+            display: block;
+            padding: 12px 20px;
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            border-bottom: 1px solid #f5f5f5;
+            transition: background 0.2s;
+        }
+
+        .script-menu a:hover {
+            background-color: #f5f7fa;
+            color: #1976D2;
+        }
+
+        .script-menu a:last-child {
+            border-bottom: none;
+        }
+
+        /* ------------------ macOS 弹窗特有样式 ------------------ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-box {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-box h3 {
+            color: #d32f2f;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-box p {
+            font-size: 14px;
+            color: #444;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .code-block {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 13px;
+            color: #333;
+            margin: 10px 0;
+            position: relative;
+            word-break: break-all;
+            border: 1px solid #ddd;
+        }
+
+        .btn-copy {
+            position: absolute;
+            top: 6px;
+            right: 5px;
+            background: #1976D2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-copy:hover {
+            background: #1565C0;
+        }
+
+        .modal-close-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            background: #e0e0e0;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .modal-close-btn:hover {
+            background: #bdbdbd;
+        }
+
+        /* ------------------ 响应式断点 ------------------ */
+        /* 如果屏幕宽度小于 768px（典型的手机屏幕尺寸），则改为垂直排列 */
+        @media (max-width: 768px) {
+            .main-wrapper {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="main-wrapper">
+        <!-- 左侧：登录与提交表单 -->
+        <div class="panel form-panel">
+            <h2>运动步数提交</h2>
+
+            <!-- 使用 form 标签包裹，让浏览器能识别这是一套完整的登录表单 -->
+            <form id="submitForm" onsubmit="submitData(event)">
+                <div class="input-group">
+                    <label for="username">Zepp Life 账号 (手机/邮箱)</label>
+                    <!-- autocomplete="username" 引导浏览器识别这是账号 -->
+                    <input type="text" id="username" name="username" placeholder="请输入绑定的账号" autocomplete="username"
+                        required>
+                </div>
+
+                <div class="input-group">
+                    <label for="password">账号密码</label>
+                    <!-- autocomplete="current-password" 引导密码管家识别这是密码 -->
+                    <input type="password" id="password" name="password" placeholder="请输入密码"
+                        autocomplete="current-password" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="stepCount">每天目标步数</label>
+                    <!-- autocomplete="off" 步数不需要密码管家记忆，但可以启用浏览器历史记忆如果需要 -->
+                    <input type="number" id="stepCount" name="stepCount" placeholder="如：30000"
+                        autocomplete="transaction-amount" required>
+                </div>
+
+                <!-- 将普通按钮改为 submit，触发 form 的提交事件拦截 -->
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <span id="btnText">立即提交</span>
+                    <div class="loader" id="btnLoader"></div>
+                </button>
+
+                <!-- 一键提交脚本生成按钮区域 -->
+                <div class="script-generator-box" style="margin-top: 15px; position: relative; text-align: left;">
+                    <button type="button" id="saveScriptBtn" class="btn-script-disabled" onclick="toggleScriptMenu()">
+                        ⬇️ 保存为一键提交脚本
+                    </button>
+                    <div id="scriptMenu" class="script-menu">
+                        <a href="javascript:void(0)" onclick="downloadScript('windows')">🪟 Windows (.bat)</a>
+                        <a href="javascript:void(0)" onclick="downloadScript('macos')">🍎 macOS (.command)</a>
+                        <a href="javascript:void(0)" onclick="downloadScript('linux')">🐧 Linux (.sh)</a>
+                    </div>
+                </div>
+            </form>
+
+            <div id="result-box"></div>
+        </div>
+
+        <!-- 右侧：文字教程 -->
+        <div class="panel tutorial-panel">
+            <h2>新手使用指南 📖</h2>
+
+            <div class="tutorial-step">
+                <h3><span>1</span>没有账号或忘记密码？</h3>
+                <p>本服务需要使用 <b>“Zepp Life”（原小米运动）</b> 的独立账号授权。</p>
+                <div class="action-links">
+                    <a href="mifit://" class="btn-link primary">🚀 一键唤醒 App (如已安装)</a>
+                    <a href="https://app.mi.com/details?id=com.xiaomi.hm.health" target="_blank" class="btn-link">⬇️
+                        安卓版下载</a>
+                    <a href="https://apps.apple.com/cn/app/zepp-life-%E5%8E%9F%E5%B0%8F%E7%B1%B3%E8%BF%90%E5%8A%A8/id938688461"
+                        target="_blank" class="btn-link">⬇️ iOS 版下载</a>
+                </div>
+            </div>
+
+            <div class="tutorial-step">
+                <h3><span>2</span>注册并绑定第三方接入</h3>
+                <p>打开 App 并注册登录成功后，请在 App 内进行如下操作：</p>
+                <p>依次点击：<span class="highlight">我的</span> ➡️ <span class="highlight">第三方接入</span> ➡️ <span
+                        class="highlight">微信</span>。</p>
+                <p>屏幕上将会提示保存一个二维码图片。</p>
+            </div>
+
+            <div class="tutorial-step">
+                <h3><span>3</span>微信扫码并关注公众号</h3>
+                <p>在微信中扫一扫刚才保存的二维码，关注并绑定微信公众号：<br><span class="highlight">“跃我amazfit”</span>。</p>
+                <p>完成绑定后，您在左侧提交的步数，就可以立刻同步刷新到微信运动排行榜中啦！</p>
+            </div>
+
+            <div class="tutorial-step">
+                <h3><span>4</span>关于常见错误</h3>
+                <p>• 提示 <span class="highlight">"登录失败"</span>：请检查 Zepp Life 账户名和密码输入是否有误。<br>
+                    • 提示 <span class="highlight">"请求频繁"</span>：官方具有防滥用机制，请勿在几分钟内连续多次重复点击提交，稍后重试即可。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unix 系系统权限提醒弹窗 -->
+    <div id="unixModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 id="unixModalTitle">⚠️ 苹果 Mac 用户必看！</h3>
+            <p id="unixModalDesc">由于安全机制限制，您刚下载的脚本首次双击将提示“没有权限”或“已损坏移至废纸篓”。请遵循以下指引修复：</p>
+
+            <p style="margin-top: 15px; font-weight: bold; color: #1976D2;">第 ① 步：给脚本添加可执行权限</p>
+            <p id="unixStep1Desc">打开电脑自带的【终端】App，复制粘贴以下这行命令并回车（提示 password 时输入您的开机密码：输入时看不见数字但其实输进去了，输完闭眼回车即可）：</p>
+            <div class="code-block">
+                <span id="unixCmd1">chmod +x ~/Downloads/一键自动刷步.command</span>
+                <button class="btn-copy"
+                    onclick="copyCode(this, document.getElementById('unixCmd1').innerText)">复制</button>
+            </div>
+
+            <div id="unixStep2Block">
+                <p style="margin-top: 15px; font-weight: bold; color: #1976D2;">第 ② 步：解除恶意软件拦截拦截（如提示废纸篓）</p>
+                <p>继续在终端内复制粘贴以下命令回车：</p>
+                <div class="code-block">
+                    <span>sudo spctl --master-disable</span>
+                    <button class="btn-copy" onclick="copyCode(this, 'sudo spctl --master-disable')">复制</button>
+                </div>
+                <p>然后去 <b>系统设置 ➡️ 隐私与安全性 ➡️ 安全性</b>，将“允许从以下位置下载的应用程序”改选为<b>【任何来源】</b>即可正常双击运行本脚本！</p>
+            </div>
+
+            <button class="modal-close-btn"
+                onclick="document.getElementById('unixModal').style.display='none'">我看懂了，关闭</button>
+        </div>
+    </div>
+
+    <script>
+        async function submitData(event) {
+            // 阻止表单原生提交导致的页面刷新重载
+            if (event) {
+                event.preventDefault();
+            }
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const stepCount = document.getElementById('stepCount').value.trim();
+
+            const resultBox = document.getElementById('result-box');
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const btnLoader = document.getElementById('btnLoader');
+
+            if (!username || !password || !stepCount) {
+                showResult('请完整填写所有账密和步数信息！', 'error');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            btnText.style.display = 'none';
+            btnLoader.style.display = 'block';
+            resultBox.style.display = 'none';
+
+            try {
+                const response = await fetch('/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user: username,
+                        pwd: password,
+                        step: parseInt(stepCount)
+                    })
+                });
+
+                const resData = await response.json();
+
+                if (resData.success) {
+                    showResult(`✅ 提交成功！<br>${resData.message}`, 'success');
+
+                    // 成功后激活一键脚本下载按钮并存储用户数据
+                    window.lastSuccessData = { username, password, stepCount };
+
+                    const scriptBtn = document.getElementById('saveScriptBtn');
+                    scriptBtn.className = 'btn-script-active';
+                    scriptBtn.innerHTML = '✨ 成功！点击生成此配置的独立一键脚本';
+                } else {
+                    showResult(`❌ 提交失败：<br>${resData.message}`, 'error');
+                }
+
+            } catch (error) {
+                showResult(`❌ 网络错误或服务崩溃：<br>${error.message}`, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                btnText.style.display = 'block';
+                btnLoader.style.display = 'none';
+            }
+        }
+
+        function showResult(message, type) {
+            const resultBox = document.getElementById('result-box');
+            resultBox.innerHTML = message;
+            resultBox.className = type === 'success' ? 'result-success' : 'result-error';
+            resultBox.style.display = 'block';
+        }
+
+        function toggleScriptMenu() {
+            if (!window.lastSuccessData) {
+                showResult('⚠️ 请输入帐号密码，预期步数，并成功提交一次后再导出脚本！', 'error');
+                return;
+            }
+            const menu = document.getElementById('scriptMenu');
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        }
+
+        // 点击空白处关闭下拉菜单
+        window.onclick = function (event) {
+            if (!event.target.matches('#saveScriptBtn')) {
+                const menu = document.getElementById('scriptMenu');
+                if (menu) menu.style.display = 'none';
+            }
+        }
+
+        function downloadScript(os) {
+            if (!window.lastSuccessData) return;
+
+            const { username, password, stepCount } = window.lastSuccessData;
+            const serverUrl = window.location.origin;
+
+            let lines = [];
+            let filename = "";
+
+            if (os === 'windows') {
+                filename = "\u4e00\u952e\u81ea\u52a8\u5237\u6b65.bat";
+                const safePwd = password.replace(/'/g, "''");
+                lines = [
+                    '@echo off',
+                    'chcp 65001 >nul',
+                    'title  \u81ea\u52a8\u5237\u6b65\u63d0\u4ea4\u5668',
+                    'color 0b',
+                    'echo ==========================================',
+                    'echo        \u4e00\u952e\u5feb\u901f\u81ea\u52a8\u5237\u6b65',
+                    'echo ==========================================',
+                    'echo \u88ab\u5237\u8d26\u53f7: ' + username,
+                    'echo \u76ee\u6807\u6b65\u6570: ' + stepCount,
+                    'echo ==========================================',
+                    'echo.',
+                    'echo \u6b63\u5728\u5411\u4e91\u63a7\u5236\u53f0\u53d1\u9001\u6307\u4ee4....',
+                    '',
+                    "powershell -NoProfile -Command \"$ProgressPreference='SilentlyContinue'; try { $body=@{user='" + username + "'; pwd='" + safePwd + "'; step=" + stepCount + "} | ConvertTo-Json -Compress; $res=Invoke-RestMethod -Uri '" + serverUrl + "/submit' -Method Post -Body $body -ContentType 'application/json' -ErrorAction Stop; if($res.success){Write-Host -ForegroundColor Green ('[OK] '+$res.message)}else{Write-Host -ForegroundColor Red ('[FAIL] '+$res.message)}} catch {Write-Host -ForegroundColor Red '[ERROR] \u7f51\u7edc\u8bf7\u6c42\u5931\u8d25\uff0c\u8bf7\u786e\u8ba4\u670d\u52a1\u5df2\u542f\u52a8\u4e14\u5730\u5740\u6709\u6548'}\"",
+                    '',
+                    'echo.',
+                    'pause'
+                ];
+                const content = lines.join('\r\n');
+                doDownload(content, filename);
+                return;
+            }
+
+            if (os === 'macos') {
+                filename = "\u4e00\u952e\u81ea\u52a8\u5237\u6b65_macOS.command";
+            } else {
+                filename = "\u4e00\u952e\u81ea\u52a8\u5237\u6b65_Linux.sh";
+            }
+
+            const jsonBody = JSON.stringify({ user: username, pwd: password, step: parseInt(stepCount) });
+            // 对 shell 中的单引号做转义
+            const safeJson = jsonBody.replace(/'/g, "'\\''");
+
+            lines = [
+                '#!/bin/bash',
+                'echo "=========================================="',
+                'echo "        \u4e00\u952e\u5feb\u901f\u81ea\u52a8\u5237\u6b65"',
+                'echo "=========================================="',
+                'echo "\u88ab\u5237\u8d26\u53f7: ' + username + '"',
+                'echo "\u76ee\u6807\u6b65\u6570: ' + stepCount + '"',
+                'echo "=========================================="',
+                'echo ""',
+                'echo "\u6b63\u5728\u5411\u4e91\u63a7\u5236\u53f0\u53d1\u9001\u6307\u4ee4...."',
+                '',
+                "RESPONSE=$(curl -s -X POST '" + serverUrl + "/submit' \\",
+                "  -H 'Content-Type: application/json' \\",
+                "  -d '" + safeJson + "')",
+                '',
+                'echo ""',
+                'if echo "$RESPONSE" | grep -q \'"success":true\' 2>/dev/null || echo "$RESPONSE" | grep -q \'"success": true\' 2>/dev/null; then',
+                '    echo -e "\\033[32m[OK] \u5df2\u5b8c\u6210\u5237\u6b65\u8bf7\u6c42\\033[0m"',
+                'else',
+                '    echo -e "\\033[31m[RESULT] $RESPONSE\\033[0m"',
+                'fi',
+                '',
+                'echo ""',
+                'read -p "\u6309\u56de\u8f66\u952e\u9000\u51fa..."'
+            ];
+            const content = lines.join('\n');
+            doDownload(content, filename);
+
+            if (os === 'macos' || os === 'linux') {
+                const modal = document.getElementById('unixModal');
+                document.getElementById('unixCmd1').innerText = `chmod +x ~/Downloads/${filename}`;
+
+                if (os === 'macos') {
+                    document.getElementById('unixModalTitle').innerText = '⚠️ 苹果 Mac 用户必看！';
+                    document.getElementById('unixModalDesc').innerHTML = '由于苹果安全机制限制（Gatekeeper），您刚下载的 <b>.command</b> 脚本首次双击将提示“没有权限”或“已损坏移至废纸篓”。请遵循以下两步修复：';
+                    document.getElementById('unixStep1Desc').innerText = '打开 Mac 电脑自带的【终端】App，复制粘贴以下这行命令并回车（提示 password 时输入您的开机密码：输入时看不见数字但其实输进去了，输完闭眼回车即可）：';
+                    document.getElementById('unixStep2Block').style.display = 'block';
+                } else {
+                    document.getElementById('unixModalTitle').innerText = '⚠️ Linux 用户必看！';
+                    document.getElementById('unixModalDesc').innerHTML = '由于 Linux 系统的安全权限限制，您刚下载的 <b>.sh</b> 脚本默认是没有执行权限的，直接双击通常会是用文本编辑器打开而不是运行。';
+                    document.getElementById('unixStep1Desc').innerText = '请打开您的【终端控制台】，复制粘贴以下这行命令赋予执行权限（如果提示权限不足请在前面加上 sudo）：';
+                    document.getElementById('unixStep2Block').style.display = 'none';
+                }
+                modal.style.display = 'flex';
+            }
+        }
+
+        // 兼容性极强的复制文本方案（包含旧版浏览器的降级处理）
+        function copyCode(btn, text) {
+            const originalText = btn.innerText;
+            const successFeedback = () => {
+                btn.innerText = "已复制!";
+                btn.style.background = "#4CAF50";
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.background = "#1976D2";
+                }, 2000);
+            };
+
+            const fallbackCopy = (content) => {
+                const textArea = document.createElement("textarea");
+                textArea.value = content;
+                // 将 textArea 移出可视区域
+                textArea.style.position = "fixed";
+                textArea.style.top = "0";
+                textArea.style.left = "0";
+                textArea.style.width = "2em";
+                textArea.style.height = "2em";
+                textArea.style.padding = "0";
+                textArea.style.border = "none";
+                textArea.style.outline = "none";
+                textArea.style.boxShadow = "none";
+                textArea.style.background = "transparent";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+
+                try {
+                    const successful = document.execCommand('copy');
+                    if (successful) successFeedback();
+                } catch (err) {
+                    btn.innerText = "复制失败!";
+                    btn.style.background = "#d32f2f";
+                    setTimeout(() => { btn.innerText = originalText; btn.style.background = "#1976D2"; }, 2000);
+                }
+                document.body.removeChild(textArea);
+            };
+
+            // 优先尝试使用现代的 Clipboard API（如果当前环境是 https 或 localhost）
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(successFeedback, () => fallbackCopy(text));
+            } else {
+                fallbackCopy(text);
+            }
+        }
+
+        function doDownload(content, filename) {
+            const blob = new Blob([content], { type: 'application/octet-stream' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.href = url;
+            link.download = filename;
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+
+</body>
+
+</html>
