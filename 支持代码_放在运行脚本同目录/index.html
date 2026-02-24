@@ -709,14 +709,14 @@
                 document.getElementById('unixCmd1').innerText = `chmod +x ~/Downloads/${filename}`;
 
                 if (os === 'macos') {
-                    document.getElementById('unixModalTitle').innerText = '⚠️ 苹果 Mac 用户必看！';
+                    document.getElementById('unixModalTitle').innerText = '⚠️ 苹果 Mac 用户必看！下载程序后需要添加运行权限才可运行';
                     document.getElementById('unixModalDesc').innerHTML = '由于苹果安全机制限制（Gatekeeper），您刚下载的 <b>.command</b> 脚本首次双击将提示“没有权限”或“已损坏移至废纸篓”。请遵循以下两步修复：';
-                    document.getElementById('unixStep1Desc').innerText = '打开 Mac 电脑自带的【终端】App，复制粘贴以下这行命令并回车（提示 password 时输入您的开机密码：输入时看不见数字但其实输进去了，输完闭眼回车即可）：';
+                    document.getElementById('unixStep1Desc').innerHTML = '<b>✅ 强烈建议：下载后先不要移动文件，暂时放在“下载 (Downloads)”文件夹中</b>。打开 Mac 电脑自带的【终端】App，直接点击复制下方的命令并回车。完成后再将文件移动到自己想要的目录即可。<br><br><span style="color:#d32f2f; font-size:13px; display:inline-block; line-height:1.6;">💡 补充：如果您现在已经把文件移到了桌面或其他地方。请先在终端输入 <code>chmod +x </code>（注意最后加一个空格不要遗漏），然后把刚下载的文件直接<b>用鼠标拖拽</b>到终端窗口里松手，此时路径就会自动补全，随后按下回车即可。</span><br><br>';
                     document.getElementById('unixStep2Block').style.display = 'block';
                 } else {
-                    document.getElementById('unixModalTitle').innerText = '⚠️ Linux 用户必看！';
-                    document.getElementById('unixModalDesc').innerHTML = '由于 Linux 系统的安全权限限制，您刚下载的 <b>.sh</b> 脚本默认是没有执行权限的，直接双击通常会是用文本编辑器打开而不是运行。';
-                    document.getElementById('unixStep1Desc').innerText = '请打开您的【终端控制台】，复制粘贴以下这行命令赋予执行权限（如果提示权限不足请在前面加上 sudo）：';
+                    document.getElementById('unixModalTitle').innerText = '⚠️ Linux 用户必看！下载程序后需要添加运行权限才可运行';
+                    document.getElementById('unixModalDesc').innerHTML = '由于 Linux 系统的安全机制限制，您刚下载的 <b>.sh</b> 脚本默认是没有执行权限的，直接双击通常会被误认为是文本文件而用记事本打开。';
+                    document.getElementById('unixStep1Desc').innerHTML = '<b>✅ 强烈建议：下载后先不要移动文件，暂时放在“下载 (Downloads)”文件夹中</b>。打开【终端控制台】，直接点击复制下方的命令并回车赋予执行权限。完成后再将文件移动到自己想要的目录即可。<br><br><span style="color:#d32f2f; font-size:13px; display:inline-block; line-height:1.6;">💡 补充：如果您现在已经把文件移动到了其他地方。请在终端输入 <code>chmod +x </code>（注意最后加一个空格），然后把文件直接<b>用鼠标拖拽</b>进终端窗口里松手，最后按下回车即可为它加上权限。</span><br><br>';
                     document.getElementById('unixStep2Block').style.display = 'none';
                 }
                 modal.style.display = 'flex';
