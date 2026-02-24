@@ -117,7 +117,7 @@ class AutoStepRunner:
             ok, msg = zeppHelper.check_app_token(app_token)
             if ok:
                 self.log_str += "使用加密保存的app_token\n"
-                return app_token
+                return app_token, "ok"
             else:
                 self.log_str += f"app_token失效 重新获取 last grant time: {user_token_info.get('app_token_time')}\n"
                 # 检查login_token是否可用
@@ -135,24 +135,24 @@ class AutoStepRunner:
                         user_token_info["login_token_time"] = get_time()
                         user_token_info["app_token_time"] = get_time()
                         self.user_id = user_id
-                        return app_token
+                        return app_token, "ok"
                 else:
                     self.log_str += "重新获取app_token成功\n"
                     user_token_info["app_token"] = app_token
                     user_token_info["app_token_time"] = get_time()
-                    return app_token
+                    return app_token, "ok"
 
         # access_token 失效 或者没有保存加密数据
         access_token, msg = zeppHelper.login_access_token(self.user, self.password)
         if access_token is None:
             self.log_str += "登录获取accessToken失败：%s" % msg
-            return None
+            return None, msg
         # print(f"device_id:{self.device_id} isPhone: {self.is_phone}")
         login_token, app_token, user_id, msg = zeppHelper.grant_login_tokens(access_token, self.device_id,
                                                                              self.is_phone)
         if login_token is None:
             self.log_str += f"登录提取的 access_token 无效：{msg}"
-            return None
+            return None, msg
 
         user_token_info = dict()
         user_token_info["access_token"] = access_token
@@ -167,15 +167,15 @@ class AutoStepRunner:
             self.device_id = uuid.uuid4()
         user_token_info["device_id"] = self.device_id
         user_tokens[self.user] = user_token_info
-        return app_token
+        return app_token, "ok"
 
     # 主函数
     def login_and_post_step(self, min_step, max_step):
         if self.invalid:
             return "账号或密码配置有误", False
-        app_token = self.login()
+        app_token, msg = self.login()
         if app_token is None:
-            return "登陆失败！", False
+            return f"{msg}", False
 
         step = str(random.randint(min_step, max_step))
         self.log_str += f"已设置为随机步数范围({min_step}~{max_step}) 随机值:{step}\n"
